@@ -5,182 +5,100 @@
 <title>AnimeCoder AI</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:Arial, sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial;}
 body{background:#0f0f14;color:white;}
-
-header{
-  padding:20px;
-  text-align:center;
-  background:#12121a;
-}
+header{text-align:center;padding:20px;background:#12121a;}
 h1{color:#00f7ff;}
-p{color:#aaa;}
-
-.controls, .form-box{
-  display:flex;
-  gap:10px;
-  padding:15px;
-  justify-content:center;
-  flex-wrap:wrap;
-}
-
-input, select, button{
-  padding:10px;
-  border-radius:8px;
-  border:none;
-  outline:none;
-  background:#1a1a26;
-  color:white;
-}
-
-button{
-  cursor:pointer;
-  border:1px solid #00f7ff44;
-}
-
-.container{
-  padding:20px;
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-  gap:15px;
-}
-
-.card{
-  background:#1a1a26;
-  padding:15px;
-  border-radius:12px;
-  text-align:center;
-  transition:0.3s;
-  border:1px solid #00f7ff22;
-}
-
-.card:hover{
-  transform:translateY(-5px) scale(1.03);
-  box-shadow:0 0 20px #00f7ff55;
-}
-
-.name{font-weight:bold;font-size:15px;}
-.username{color:#aaa;font-size:13px;margin:5px 0;}
-.category{
-  font-size:11px;
-  color:#00f7ff;
-  margin-bottom:5px;
-}
-a{
-  display:inline-block;
-  margin-top:8px;
-  color:#00f7ff;
-  text-decoration:none;
-  font-size:13px;
-}
-
-footer{
-  text-align:center;
-  padding:15px;
-  color:#666;
-  font-size:12px;
-}
+.controls,.form-box{display:flex;gap:10px;justify-content:center;padding:15px;flex-wrap:wrap;}
+input,select,button{padding:10px;border-radius:8px;border:none;background:#1a1a26;color:white;}
+button{border:1px solid #00f7ff44;cursor:pointer;}
+.container{padding:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;}
+.card{background:#1a1a26;padding:15px;border-radius:12px;text-align:center;border:1px solid #00f7ff22;}
+.category{font-size:11px;color:#00f7ff;}
+.name{font-weight:bold;}
+.username{font-size:13px;color:#aaa;}
+a{color:#00f7ff;font-size:13px;text-decoration:none;}
+footer{text-align:center;color:#666;padding:15px;font-size:12px;}
 </style>
 </head>
 
 <body>
 
 <header>
-  <h1>AnimeCoder AI</h1>
-  <p>AI Powered Anime Creator Platform</p>
+<h1>AnimeCoder AI</h1>
+<p>AI Powered Anime Creator Platform</p>
 </header>
 
-<!-- SEARCH + FILTER -->
-<div class="controls">
-  <input type="text" id="search" placeholder="Search creators...">
-  <select id="filter">
-    <option value="all">All</option>
-    <option value="lyrics">Lyrics</option>
-    <option value="amv">AMV</option>
-    <option value="edits">Edits</option>
-    <option value="anime">Anime Pages</option>
-  </select>
-</div>
-
-<!-- SUBMIT FORM -->
 <div class="form-box">
-  <input type="text" id="nameInput" placeholder="Creator Name">
-  <input type="text" id="userInput" placeholder="Username">
-  <input type="text" id="linkInput" placeholder="Profile Link">
-  <select id="catInput">
-    <option value="lyrics">Lyrics</option>
-    <option value="amv">AMV</option>
-    <option value="edits">Edits</option>
-    <option value="anime">Anime Page</option>
-  </select>
-  <button onclick="addProfile()">Submit Profile</button>
+<input id="nameInput" placeholder="Creator Name">
+<input id="userInput" placeholder="Username">
+<input id="linkInput" placeholder="Profile Link">
+<select id="catInput">
+<option value="lyrics">Lyrics</option>
+<option value="amv">AMV</option>
+<option value="edits">Edits</option>
+<option value="anime">Anime</option>
+</select>
+<button onclick="addProfile()">Submit</button>
 </div>
 
-<!-- CARDS -->
 <div class="container" id="cards"></div>
 
-<footer>
-© 2026 AnimeCoder AI | Community Powered Platform ⚡
-</footer>
+<footer>© 2026 AnimeCoder AI | Backend Powered Platform ⚡</footer>
 
 <script>
+/* 🔥 FIREBASE CONFIG — YAHAN APNA CONFIG PASTE KARNA */
+const firebaseConfig = {
+  apiKey: "PASTE_HERE",
+  authDomain: "PASTE_HERE",
+  projectId: "PASTE_HERE",
+  storageBucket: "PASTE_HERE",
+  messagingSenderId: "PASTE_HERE",
+  appId: "PASTE_HERE"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
 const cardsContainer = document.getElementById("cards");
-const search = document.getElementById("search");
-const filter = document.getElementById("filter");
 
 function addProfile(){
-  const name = nameInput.value.trim();
-  const user = userInput.value.trim();
-  const link = linkInput.value.trim();
+  const name = nameInput.value;
+  const user = userInput.value;
+  const link = linkInput.value;
   const cat = catInput.value;
 
-  if(!name || !user || !link){
-    alert("Fill all fields");
-    return;
-  }
+  if(!name || !user || !link) return alert("Fill all fields");
 
-  const card = document.createElement("div");
-  card.className = "card";
-  card.dataset.name = name.toLowerCase();
-  card.dataset.cat = cat;
-
-  card.innerHTML = `
-    <div class="category">${cat.toUpperCase()}</div>
-    <div class="name">${name}</div>
-    <div class="username">@${user}</div>
-    <a href="${link}" target="_blank">View Profile</a>
-  `;
-
-  cardsContainer.prepend(card);
+  db.collection("profiles").add({
+    name, user, link, cat
+  });
 
   nameInput.value="";
   userInput.value="";
   linkInput.value="";
 }
 
-function update(){
-  const text = search.value.toLowerCase();
-  const cat = filter.value;
-  const cards = document.querySelectorAll(".card");
-
-  cards.forEach(card=>{
-    const name = card.dataset.name;
-    const category = card.dataset.cat;
-
-    const matchText = name.includes(text);
-    const matchCat = (cat==="all" || cat===category);
-
-    if(matchText && matchCat){
-      card.style.display="block";
-    }else{
-      card.style.display="none";
-    }
+/* 🔥 REAL-TIME LOAD */
+db.collection("profiles").onSnapshot(snapshot=>{
+  cardsContainer.innerHTML="";
+  snapshot.forEach(doc=>{
+    const d = doc.data();
+    const card = document.createElement("div");
+    card.className="card";
+    card.innerHTML=`
+      <div class="category">${d.cat.toUpperCase()}</div>
+      <div class="name">${d.name}</div>
+      <div class="username">@${d.user}</div>
+      <a href="${d.link}" target="_blank">View Profile</a>
+    `;
+    cardsContainer.prepend(card);
   });
-}
-
-search.addEventListener("input", update);
-filter.addEventListener("change", update);
+});
 </script>
 
 </body>
