@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>AnimeCoder AI - Version 5 FINAL</title>
+<title>AnimeCoder AI - Version 5 LIVE</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif;}
@@ -28,7 +28,7 @@ footer{text-align:center;color:#666;padding:15px;font-size:12px;}
 
 <header>
 <h1>AnimeCoder AI</h1>
-<p>AI Powered Anime Creator Platform - Version 5 FINAL</p>
+<p>AI Powered Anime Creator Platform - Version 5 LIVE</p>
 </header>
 
 <!-- AUTH FORM -->
@@ -73,7 +73,7 @@ footer{text-align:center;color:#666;padding:15px;font-size:12px;}
 <!-- CARDS -->
 <div class="container" id="cards"></div>
 
-<footer>© 2026 AnimeCoder AI | Full Version 5 ⚡</footer>
+<footer>© 2026 AnimeCoder AI | Full Version 5 LIVE ⚡</footer>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
@@ -107,31 +107,24 @@ const passInput = document.getElementById("passInput");
 const logoutBtn = document.getElementById("logoutBtn");
 
 let currentUser = null;
-
-// ✅ Admin UID set
-let adminUID = "O1yzv2Kpf4YZQ1CUejM05pvP4dj1";
+let adminUID = "O1yzv2Kpf4YZQ1CUejM05pvP4dj1"; // ✅ Tera UID
 
 // 🔹 AUTH FUNCTIONS
 function signup(){
-  const email = emailInput.value;
-  const pass = passInput.value;
+  const email=emailInput.value, pass=passInput.value;
   createUserWithEmailAndPassword(auth,email,pass)
   .then(()=>alert("Signed up! Login now."))
   .catch(e=>alert(e.message));
 }
-
 function login(){
-  const email = emailInput.value;
-  const pass = passInput.value;
+  const email=emailInput.value, pass=passInput.value;
   signInWithEmailAndPassword(auth,email,pass)
   .catch(e=>alert(e.message));
 }
-
 function googleLogin(){
-  const provider = new GoogleAuthProvider();
+  const provider=new GoogleAuthProvider();
   signInWithPopup(auth,provider).catch(e=>alert(e.message));
 }
-
 function logout(){
   signOut(auth);
 }
@@ -150,30 +143,12 @@ onAuthStateChanged(auth,user=>{
   }
 });
 
-// 🔹 ADD PROFILE WITH SIMPLE AI MODERATION
+// 🔹 ADD PROFILE
 async function addProfile(){
   if(!currentUser){ alert("Login first to submit profile"); return; }
-  const name = nameInput.value.trim();
-  const user = userInput.value.trim();
-  const link = linkInput.value.trim();
-  const cat = catInput.value;
-
-  if(!name || !user || !link){ alert("Fill all fields"); return; }
-
-  // Simple AI moderation example
-  const forbidden=["badword1","spamlink.com"];
-  const combined = (name+" "+user+" "+link).toLowerCase();
-  for(const word of forbidden){
-    if(combined.includes(word)){
-      alert("Inappropriate content detected! Admin will review.");
-      break;
-    }
-  }
-
-  await addDoc(collection(db,"profiles"),{
-    name,user,link,cat,uid:currentUser.uid,verified:false
-  });
-
+  const name=nameInput.value.trim(), user=userInput.value.trim(), link=linkInput.value.trim(), cat=catInput.value;
+  if(!name||!user||!link){ alert("Fill all fields"); return; }
+  await addDoc(collection(db,"profiles"),{name,user,link,cat,uid:currentUser.uid,verified:false});
   nameInput.value=""; userInput.value=""; linkInput.value="";
 }
 
@@ -186,24 +161,21 @@ onSnapshot(collection(db,"profiles"),snapshot=>{
     card.className="card";
     card.dataset.name=d.name.toLowerCase();
     card.dataset.cat=d.cat;
-
     card.innerHTML=`
       <div class="category">${d.cat.toUpperCase()} ${d.verified?'<span class="verified">✅</span>':''}</div>
       <div class="name">${d.name}</div>
       <div class="username">@${d.user}</div>
       <a href="${d.link}" target="_blank">View Profile</a>
     `;
-
     if(currentUser && currentUser.uid===adminUID && !d.verified){
       const verifyBtn=document.createElement("button");
       verifyBtn.textContent="Verify";
       verifyBtn.onclick=async ()=>{ await updateDoc(doc(db,"profiles",docSnap.id),{verified:true}); };
       card.appendChild(verifyBtn);
     }
-
     cardsContainer.prepend(card);
   });
-  update(); // maintain search/filter
+  update();
 });
 
 // 🔹 CREATOR DASHBOARD
