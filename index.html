@@ -80,6 +80,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebas
 import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
 
+// 🔹 Firebase Config - Replace with your project config
 const firebaseConfig = {
   apiKey: "AIzaSyD2I0nNxD5eOV7go0-Wt6F9qAkkALHGUE8",
   authDomain: "animecoderai.firebaseapp.com",
@@ -107,7 +108,7 @@ const passInput = document.getElementById("passInput");
 const logoutBtn = document.getElementById("logoutBtn");
 
 let currentUser = null;
-let adminUID = "O1yzv2Kpf4YZQ1CUejM05pvP4dj1"; // ✅ Tera UID
+let adminUID = "O1yzv2Kpf4YZQ1CUejM05pvP4dj1"; // ✅ Tera Admin UID
 
 // 🔹 AUTH FUNCTIONS
 function signup(){
