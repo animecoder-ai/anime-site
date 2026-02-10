@@ -5,22 +5,21 @@
 <title>AnimeCoder AI</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:Arial;}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif;}
 body{background:#0f0f14;color:white;}
 header{text-align:center;padding:20px;background:#12121a;}
 h1{color:#00f7ff;}
+p{color:#aaa;}
 .controls,.form-box{display:flex;gap:10px;justify-content:center;padding:15px;flex-wrap:wrap;}
 input,select,button{padding:10px;border-radius:8px;border:none;background:#1a1a26;color:white;}
 button{border:1px solid #00f7ff44;cursor:pointer;}
 .container{padding:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;}
-.card{background:#1a1a26;padding:15px;border-radius:12px;text-align:center;border:1px solid #00f7ff22;}
-.category{font-size:11px;color:#00f7ff;}
+.card{background:#1a1a26;padding:15px;border-radius:12px;text-align:center;border:1px solid #00f7ff22;transition:0.3s;}
+.card:hover{transform:translateY(-5px) scale(1.03);box-shadow:0 0 20px #00f7ff55;}
+.category{font-size:11px;color:#00f7ff;margin-bottom:5px;}
 .name{font-weight:bold;}
-.username{font-size:13px;color:#aaa;}
+.username{font-size:13px;color:#aaa;margin:5px 0;}
 a{color:#00f7ff;font-size:13px;text-decoration:none;}
 footer{text-align:center;color:#666;padding:15px;font-size:12px;}
 </style>
@@ -33,6 +32,7 @@ footer{text-align:center;color:#666;padding:15px;font-size:12px;}
 <p>AI Powered Anime Creator Platform</p>
 </header>
 
+<!-- FORM -->
 <div class="form-box">
 <input id="nameInput" placeholder="Creator Name">
 <input id="userInput" placeholder="Username">
@@ -46,50 +46,74 @@ footer{text-align:center;color:#666;padding:15px;font-size:12px;}
 <button onclick="addProfile()">Submit</button>
 </div>
 
+<!-- SEARCH + FILTER -->
+<div class="controls">
+<input type="text" id="search" placeholder="Search creators...">
+<select id="filter">
+<option value="all">All</option>
+<option value="lyrics">Lyrics</option>
+<option value="amv">AMV</option>
+<option value="edits">Edits</option>
+<option value="anime">Anime</option>
+</select>
+</div>
+
+<!-- CARDS -->
 <div class="container" id="cards"></div>
 
 <footer>© 2026 AnimeCoder AI | Backend Powered Platform ⚡</footer>
 
-<script>
-/* 🔥 FIREBASE CONFIG — YAHAN APNA CONFIG PASTE KARNA */
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
 const firebaseConfig = {
-  apiKey: "PASTE_HERE",
-  authDomain: "PASTE_HERE",
-  projectId: "PASTE_HERE",
-  storageBucket: "PASTE_HERE",
-  messagingSenderId: "PASTE_HERE",
-  appId: "PASTE_HERE"
+  apiKey: "AIzaSyD2I0nNxD5eOV7go0-Wt6F9qAkkALHGUE8",
+  authDomain: "animecoderai.firebaseapp.com",
+  projectId: "animecoderai",
+  storageBucket: "animecoderai.firebasestorage.app",
+  messagingSenderId: "580759212177",
+  appId: "1:580759212177:web:5d97ebe4b957ad1a5c6f30",
+  measurementId: "G-LKXFZ8ZLRZ"
 };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 const cardsContainer = document.getElementById("cards");
+const nameInput = document.getElementById("nameInput");
+const userInput = document.getElementById("userInput");
+const linkInput = document.getElementById("linkInput");
+const catInput = document.getElementById("catInput");
+const search = document.getElementById("search");
+const filter = document.getElementById("filter");
 
-function addProfile(){
-  const name = nameInput.value;
-  const user = userInput.value;
-  const link = linkInput.value;
+// ADD PROFILE
+async function addProfile(){
+  const name = nameInput.value.trim();
+  const user = userInput.value.trim();
+  const link = linkInput.value.trim();
   const cat = catInput.value;
 
-  if(!name || !user || !link) return alert("Fill all fields");
+  if(!name || !user || !link){
+    alert("Fill all fields");
+    return;
+  }
 
-  db.collection("profiles").add({
-    name, user, link, cat
-  });
-
-  nameInput.value="";
-  userInput.value="";
-  linkInput.value="";
+  await addDoc(collection(db,"profiles"),{name,user,link,cat});
+  nameInput.value=""; userInput.value=""; linkInput.value="";
 }
 
-/* 🔥 REAL-TIME LOAD */
-db.collection("profiles").onSnapshot(snapshot=>{
+// REAL-TIME LOAD
+onSnapshot(collection(db,"profiles"), snapshot=>{
   cardsContainer.innerHTML="";
   snapshot.forEach(doc=>{
     const d = doc.data();
     const card = document.createElement("div");
     card.className="card";
+    card.dataset.name = d.name.toLowerCase();
+    card.dataset.cat = d.cat;
     card.innerHTML=`
       <div class="category">${d.cat.toUpperCase()}</div>
       <div class="name">${d.name}</div>
@@ -99,6 +123,20 @@ db.collection("profiles").onSnapshot(snapshot=>{
     cardsContainer.prepend(card);
   });
 });
+
+// SEARCH + FILTER
+function update(){
+  const text = search.value.toLowerCase();
+  const catVal = filter.value;
+  document.querySelectorAll(".card").forEach(card=>{
+    const matchText = card.dataset.name.includes(text);
+    const matchCat = (catVal==="all" || card.dataset.cat===catVal);
+    card.style.display = (matchText && matchCat) ? "block" : "none";
+  });
+}
+
+search.addEventListener("input",update);
+filter.addEventListener("change",update);
 </script>
 
 </body>
