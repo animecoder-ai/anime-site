@@ -1,45 +1,165 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>AnimeCoder AI</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box;font-family:Arial, sans-serif;}
-    body{background:#0f0f14;color:white;}
-    header{padding:20px;text-align:center;background:#12121a;}
-    h1{color:#00f7ff;}
-    .container{padding:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px;}
-    .card{background:#1a1a26;padding:15px;border-radius:10px;text-align:center;transition:0.3s;}
-    .card:hover{transform:scale(1.05);box-shadow:0 0 15px #00f7ff55;}
-    .name{font-weight:bold;}
-    .username{color:#aaa;font-size:13px;}
-    a{color:#00f7ff;text-decoration:none;font-size:13px;}
-    footer{text-align:center;padding:15px;color:#666;font-size:12px;}
-  </style>
+<meta charset="UTF-8">
+<title>AnimeCoder AI</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial, sans-serif;}
+body{background:#0f0f14;color:white;}
+
+header{
+  padding:20px;
+  text-align:center;
+  background:#12121a;
+}
+h1{color:#00f7ff;}
+p{color:#aaa;}
+
+.controls{
+  display:flex;
+  gap:10px;
+  padding:15px;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+
+input, select{
+  padding:10px;
+  border-radius:8px;
+  border:none;
+  outline:none;
+  background:#1a1a26;
+  color:white;
+}
+
+.container{
+  padding:20px;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:15px;
+}
+
+.card{
+  background:#1a1a26;
+  padding:15px;
+  border-radius:12px;
+  text-align:center;
+  transition:0.3s;
+  border:1px solid #00f7ff22;
+}
+
+.card:hover{
+  transform:translateY(-5px) scale(1.03);
+  box-shadow:0 0 20px #00f7ff55;
+}
+
+.name{font-weight:bold;font-size:15px;}
+.username{color:#aaa;font-size:13px;margin:5px 0;}
+.category{
+  font-size:11px;
+  color:#00f7ff;
+  margin-bottom:5px;
+}
+a{
+  display:inline-block;
+  margin-top:8px;
+  color:#00f7ff;
+  text-decoration:none;
+  font-size:13px;
+}
+
+footer{
+  text-align:center;
+  padding:15px;
+  color:#666;
+  font-size:12px;
+}
+</style>
 </head>
+
 <body>
 
 <header>
   <h1>AnimeCoder AI</h1>
-  <p>Anime Creators Community</p>
+  <p>Anime Creators Community Platform</p>
 </header>
 
-<div class="container">
-
-  <div class="card">
-  <div class="name">Lyrical Vibes</div>
-  <div class="username">@lyricalvibesofficial_1</div>
-  <a href="https://instagram.com/lyricalvibesofficial_1" target="_blank">View Profile</a>
+<div class="controls">
+  <input type="text" id="search" placeholder="Search creators...">
+  <select id="filter">
+    <option value="all">All</option>
+    <option value="lyrics">Lyrics</option>
+    <option value="amv">AMV</option>
+    <option value="edits">Edits</option>
+    <option value="anime">Anime Pages</option>
+  </select>
 </div>
 
-  <!-- Copy this block to add more profiles -->
+<div class="container" id="cards">
+
+  <div class="card" data-name="lyrical vibes" data-cat="lyrics">
+    <div class="category">Lyrics</div>
+    <div class="name">Lyrical Vibes</div>
+    <div class="username">@lyricalvibesofficial_1</div>
+    <a href="https://instagram.com/lyricalvibesofficial_1" target="_blank">View Profile</a>
+  </div>
+
+  <div class="card" data-name="anime edits hub" data-cat="edits">
+    <div class="category">Edits</div>
+    <div class="name">Anime Edits Hub</div>
+    <div class="username">@animeeditshub</div>
+    <a href="#" target="_blank">View Profile</a>
+  </div>
+
+  <div class="card" data-name="amv world" data-cat="amv">
+    <div class="category">AMV</div>
+    <div class="name">AMV World</div>
+    <div class="username">@amvworld</div>
+    <a href="#" target="_blank">View Profile</a>
+  </div>
+
+  <div class="card" data-name="anime universe" data-cat="anime">
+    <div class="category">Anime Page</div>
+    <div class="name">Anime Universe</div>
+    <div class="username">@animeuniverse</div>
+    <a href="#" target="_blank">View Profile</a>
+  </div>
 
 </div>
 
 <footer>
-  © 2026 AnimeCoder AI | Built with ❤️ for anime fans
+© 2026 AnimeCoder AI | Built for anime creators ⚡
 </footer>
+
+<script>
+const search = document.getElementById("search");
+const filter = document.getElementById("filter");
+const cards = document.querySelectorAll(".card");
+
+function update(){
+  const text = search.value.toLowerCase();
+  const cat = filter.value;
+
+  cards.forEach(card=>{
+    const name = card.dataset.name;
+    const category = card.dataset.cat;
+
+    const matchText = name.includes(text);
+    const matchCat = (cat==="all" || cat===category);
+
+    if(matchText && matchCat){
+      card.style.display="block";
+    }else{
+      card.style.display="none";
+    }
+  });
+}
+
+search.addEventListener("input", update);
+filter.addEventListener("change", update);
+</script>
 
 </body>
 </html>
