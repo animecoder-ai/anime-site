@@ -2,37 +2,46 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>AnimeCoder AI</title>
+<title>AnimeCoder AI - Version 5 FINAL</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif;}
 body{background:#0f0f14;color:white;}
 header{text-align:center;padding:20px;background:#12121a;}
 h1{color:#00f7ff;}
 p{color:#aaa;}
-.controls,.form-box{display:flex;gap:10px;justify-content:center;padding:15px;flex-wrap:wrap;}
+.auth-box,.form-box,.controls,.dashboard{display:flex;gap:10px;justify-content:center;padding:15px;flex-wrap:wrap;}
 input,select,button{padding:10px;border-radius:8px;border:none;background:#1a1a26;color:white;}
 button{border:1px solid #00f7ff44;cursor:pointer;}
 .container{padding:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:15px;}
-.card{background:#1a1a26;padding:15px;border-radius:12px;text-align:center;border:1px solid #00f7ff22;transition:0.3s;}
+.card{background:#1a1a26;padding:15px;border-radius:12px;text-align:center;border:1px solid #00f7ff22;transition:0.3s;position:relative;}
 .card:hover{transform:translateY(-5px) scale(1.03);box-shadow:0 0 20px #00f7ff55;}
 .category{font-size:11px;color:#00f7ff;margin-bottom:5px;}
 .name{font-weight:bold;}
 .username{font-size:13px;color:#aaa;margin:5px 0;}
+.verified{color:#00ff88;font-size:14px;margin-left:5px;}
 a{color:#00f7ff;font-size:13px;text-decoration:none;}
 footer{text-align:center;color:#666;padding:15px;font-size:12px;}
 </style>
 </head>
-
 <body>
 
 <header>
 <h1>AnimeCoder AI</h1>
-<p>AI Powered Anime Creator Platform</p>
+<p>AI Powered Anime Creator Platform - Version 5 FINAL</p>
 </header>
 
-<!-- FORM -->
+<!-- AUTH FORM -->
+<div class="auth-box">
+<input id="emailInput" placeholder="Email">
+<input id="passInput" type="password" placeholder="Password">
+<button onclick="signup()">Sign Up</button>
+<button onclick="login()">Login</button>
+<button onclick="googleLogin()">Google Login</button>
+<button onclick="logout()" id="logoutBtn" style="display:none;">Logout</button>
+</div>
+
+<!-- SUBMIT FORM -->
 <div class="form-box">
 <input id="nameInput" placeholder="Creator Name">
 <input id="userInput" placeholder="Username">
@@ -43,7 +52,7 @@ footer{text-align:center;color:#666;padding:15px;font-size:12px;}
 <option value="edits">Edits</option>
 <option value="anime">Anime</option>
 </select>
-<button onclick="addProfile()">Submit</button>
+<button onclick="addProfile()">Submit Profile</button>
 </div>
 
 <!-- SEARCH + FILTER -->
@@ -58,15 +67,18 @@ footer{text-align:center;color:#666;padding:15px;font-size:12px;}
 </select>
 </div>
 
+<!-- CREATOR DASHBOARD -->
+<div class="dashboard" id="dashboard"></div>
+
 <!-- CARDS -->
 <div class="container" id="cards"></div>
 
-<footer>© 2026 AnimeCoder AI | Backend Powered Platform ⚡</footer>
+<footer>© 2026 AnimeCoder AI | Full Version 5 ⚡</footer>
 
-<!-- FIREBASE -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD2I0nNxD5eOV7go0-Wt6F9qAkkALHGUE8",
@@ -80,64 +92,159 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
 const cardsContainer = document.getElementById("cards");
+const dashboard = document.getElementById("dashboard");
 const nameInput = document.getElementById("nameInput");
 const userInput = document.getElementById("userInput");
 const linkInput = document.getElementById("linkInput");
 const catInput = document.getElementById("catInput");
 const search = document.getElementById("search");
 const filter = document.getElementById("filter");
+const emailInput = document.getElementById("emailInput");
+const passInput = document.getElementById("passInput");
+const logoutBtn = document.getElementById("logoutBtn");
 
-// ADD PROFILE
+let currentUser = null;
+
+// ✅ Admin UID set
+let adminUID = "O1yzv2Kpf4YZQ1CUejM05pvP4dj1";
+
+// 🔹 AUTH FUNCTIONS
+function signup(){
+  const email = emailInput.value;
+  const pass = passInput.value;
+  createUserWithEmailAndPassword(auth,email,pass)
+  .then(()=>alert("Signed up! Login now."))
+  .catch(e=>alert(e.message));
+}
+
+function login(){
+  const email = emailInput.value;
+  const pass = passInput.value;
+  signInWithEmailAndPassword(auth,email,pass)
+  .catch(e=>alert(e.message));
+}
+
+function googleLogin(){
+  const provider = new GoogleAuthProvider();
+  signInWithPopup(auth,provider).catch(e=>alert(e.message));
+}
+
+function logout(){
+  signOut(auth);
+}
+
+// 🔹 AUTH STATE
+onAuthStateChanged(auth,user=>{
+  currentUser=user;
+  if(user){
+    logoutBtn.style.display="inline-block";
+    document.querySelector(".form-box").style.display="flex";
+    loadDashboard();
+  }else{
+    logoutBtn.style.display="none";
+    document.querySelector(".form-box").style.display="none";
+    dashboard.innerHTML="";
+  }
+});
+
+// 🔹 ADD PROFILE WITH SIMPLE AI MODERATION
 async function addProfile(){
+  if(!currentUser){ alert("Login first to submit profile"); return; }
   const name = nameInput.value.trim();
   const user = userInput.value.trim();
   const link = linkInput.value.trim();
   const cat = catInput.value;
 
-  if(!name || !user || !link){
-    alert("Fill all fields");
-    return;
+  if(!name || !user || !link){ alert("Fill all fields"); return; }
+
+  // Simple AI moderation example
+  const forbidden=["badword1","spamlink.com"];
+  const combined = (name+" "+user+" "+link).toLowerCase();
+  for(const word of forbidden){
+    if(combined.includes(word)){
+      alert("Inappropriate content detected! Admin will review.");
+      break;
+    }
   }
 
-  await addDoc(collection(db,"profiles"),{name,user,link,cat});
+  await addDoc(collection(db,"profiles"),{
+    name,user,link,cat,uid:currentUser.uid,verified:false
+  });
+
   nameInput.value=""; userInput.value=""; linkInput.value="";
 }
 
-// REAL-TIME LOAD
-onSnapshot(collection(db,"profiles"), snapshot=>{
+// 🔹 REAL-TIME LOAD + ADMIN VERIFY
+onSnapshot(collection(db,"profiles"),snapshot=>{
   cardsContainer.innerHTML="";
-  snapshot.forEach(doc=>{
-    const d = doc.data();
-    const card = document.createElement("div");
+  snapshot.forEach(docSnap=>{
+    const d=docSnap.data();
+    const card=document.createElement("div");
     card.className="card";
-    card.dataset.name = d.name.toLowerCase();
-    card.dataset.cat = d.cat;
+    card.dataset.name=d.name.toLowerCase();
+    card.dataset.cat=d.cat;
+
     card.innerHTML=`
-      <div class="category">${d.cat.toUpperCase()}</div>
+      <div class="category">${d.cat.toUpperCase()} ${d.verified?'<span class="verified">✅</span>':''}</div>
       <div class="name">${d.name}</div>
       <div class="username">@${d.user}</div>
       <a href="${d.link}" target="_blank">View Profile</a>
     `;
+
+    if(currentUser && currentUser.uid===adminUID && !d.verified){
+      const verifyBtn=document.createElement("button");
+      verifyBtn.textContent="Verify";
+      verifyBtn.onclick=async ()=>{ await updateDoc(doc(db,"profiles",docSnap.id),{verified:true}); };
+      card.appendChild(verifyBtn);
+    }
+
     cardsContainer.prepend(card);
   });
+  update(); // maintain search/filter
 });
 
-// SEARCH + FILTER
+// 🔹 CREATOR DASHBOARD
+async function loadDashboard(){
+  if(!currentUser) return;
+  const q=query(collection(db,"profiles"),where("uid","==",currentUser.uid));
+  dashboard.innerHTML="<h3>Your Submitted Profiles</h3>";
+  onSnapshot(q,snapshot=>{
+    dashboard.innerHTML="<h3>Your Submitted Profiles</h3>";
+    snapshot.forEach(docSnap=>{
+      const d=docSnap.data();
+      const card=document.createElement("div");
+      card.className="card";
+      card.innerHTML=`
+        <div class="category">${d.cat.toUpperCase()} ${d.verified?'<span class="verified">✅</span>':''}</div>
+        <div class="name">${d.name}</div>
+        <div class="username">@${d.user}</div>
+        <a href="${d.link}" target="_blank">View Profile</a>
+      `;
+      const delBtn=document.createElement("button");
+      delBtn.textContent="Delete";
+      delBtn.onclick=()=>deleteDoc(doc(db,"profiles",docSnap.id));
+      card.appendChild(delBtn);
+      dashboard.appendChild(card);
+    });
+  });
+}
+
+// 🔹 SEARCH + FILTER
 function update(){
   const text = search.value.toLowerCase();
   const catVal = filter.value;
   document.querySelectorAll(".card").forEach(card=>{
     const matchText = card.dataset.name.includes(text);
     const matchCat = (catVal==="all" || card.dataset.cat===catVal);
-    card.style.display = (matchText && matchCat) ? "block" : "none";
+    card.style.display=(matchText && matchCat)?"block":"none";
   });
 }
-
 search.addEventListener("input",update);
 filter.addEventListener("change",update);
-</script>
 
+</script>
 </body>
 </html>
